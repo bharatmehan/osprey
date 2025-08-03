@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alignecoderepos/osprey/pkg/client"
+	"github.com/bharatmehan/osprey/pkg/client"
 )
 
 func main() {

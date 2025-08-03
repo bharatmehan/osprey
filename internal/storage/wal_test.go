@@ -202,10 +202,10 @@ func TestWAL_CorruptedRecord(t *testing.T) {
 	// Corrupt the file by truncating it
 	file, err := os.OpenFile(wal.Path(), os.O_WRONLY, 0)
 	require.NoError(t, err)
-	
+
 	stat, err := file.Stat()
 	require.NoError(t, err)
-	
+
 	// Truncate to remove the CRC
 	err = file.Truncate(stat.Size() - 4)
 	require.NoError(t, err)

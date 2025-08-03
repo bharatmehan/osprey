@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 )
 
 // WALManager manages WAL files and rotation

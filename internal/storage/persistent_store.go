@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 )
 
 // PersistentStore is a Store with WAL persistence

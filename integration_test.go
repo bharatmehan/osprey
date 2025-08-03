@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
-	"github.com/alignecoderepos/osprey/internal/server"
-	"github.com/alignecoderepos/osprey/pkg/client"
+	"github.com/bharatmehan/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/server"
+	"github.com/bharatmehan/osprey/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

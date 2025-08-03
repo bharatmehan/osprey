@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
-	"github.com/alignecoderepos/osprey/internal/protocol"
-	"github.com/alignecoderepos/osprey/internal/storage"
+	"github.com/bharatmehan/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/protocol"
+	"github.com/bharatmehan/osprey/internal/storage"
 )
 
 // Server represents the Osprey server

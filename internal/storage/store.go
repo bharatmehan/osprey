@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 )
 
 var (
@@ -17,7 +17,20 @@ var (
 	ErrNotInteger      = errors.New("value is not an integer")
 	ErrKeyTooLarge     = errors.New("key too large")
 	ErrValueTooLarge   = errors.New("value too large")
+	ErrKeyInvalid      = errors.New("key contains invalid characters")
 )
+
+// validateKey checks if a key contains invalid characters (ASCII spaces or control chars)
+func validateKey(key string) error {
+	for i := 0; i < len(key); i++ {
+		c := key[i]
+		// Check for ASCII space (0x20) or control characters (0x00-0x1F, 0x7F)
+		if c == 0x20 || c <= 0x1F || c == 0x7F {
+			return ErrKeyInvalid
+		}
+	}
+	return nil
+}
 
 // Store is the main in-memory key-value store
 type Store struct {
@@ -58,6 +71,10 @@ func New(cfg *config.Config) *Store {
 
 // Get retrieves a value by key, checking for expiry
 func (s *Store) Get(key string) (*Entry, error) {
+	if err := validateKey(key); err != nil {
+		return nil, err
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -92,6 +109,9 @@ func (s *Store) Get(key string) (*Entry, error) {
 func (s *Store) Set(key string, value []byte, opts SetOptions) (uint64, error) {
 	if len(key) > s.config.MaxKeyBytes {
 		return 0, ErrKeyTooLarge
+	}
+	if err := validateKey(key); err != nil {
+		return 0, err
 	}
 	if len(value) > s.config.MaxValueBytes {
 		return 0, ErrValueTooLarge
@@ -155,6 +175,10 @@ func (s *Store) Set(key string, value []byte, opts SetOptions) (uint64, error) {
 
 // Delete removes a key from the store
 func (s *Store) Delete(key string) bool {
+	if err := validateKey(key); err != nil {
+		return false
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -171,6 +195,10 @@ func (s *Store) Delete(key string) bool {
 
 // Exists checks if a key exists (not expired)
 func (s *Store) Exists(key string) bool {
+	if err := validateKey(key); err != nil {
+		return false
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -180,6 +208,10 @@ func (s *Store) Exists(key string) bool {
 
 // Expire sets a TTL on a key
 func (s *Store) Expire(key string, ttlMs int64) error {
+	if err := validateKey(key); err != nil {
+		return err
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -200,6 +232,10 @@ func (s *Store) Expire(key string, ttlMs int64) error {
 
 // TTL returns the time to live for a key
 func (s *Store) TTL(key string) int64 {
+	if err := validateKey(key); err != nil {
+		return -2 // Invalid key treated as not found
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -213,6 +249,10 @@ func (s *Store) TTL(key string) int64 {
 
 // Incr increments a numeric value
 func (s *Store) Incr(key string, delta int64) (int64, error) {
+	if err := validateKey(key); err != nil {
+		return 0, err
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

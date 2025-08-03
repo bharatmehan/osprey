@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -288,7 +288,10 @@ func TestSnapshotManager_NeedsSnapshot(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WALMaxBytes = 1000
 
-	manager := &SnapshotManager{config: cfg}
+	manager := &SnapshotManager{
+		config:         cfg,
+		lastSnapshotMs: time.Now().UnixMilli(), // Set recent snapshot time
+	}
 
 	// Should need snapshot if WAL exceeds threshold
 	assert.True(t, manager.NeedsSnapshot(1001, 500, 100))

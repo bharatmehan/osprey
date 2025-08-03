@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alignecoderepos/osprey/internal/protocol"
-	"github.com/alignecoderepos/osprey/internal/storage"
+	"github.com/bharatmehan/osprey/internal/protocol"
+	"github.com/bharatmehan/osprey/internal/storage"
 )
 
 // handlePing handles the PING command
@@ -27,6 +27,8 @@ func (s *Server) handleGet(cmd *protocol.Command, w io.Writer) {
 	if err != nil {
 		if err == storage.ErrKeyNotFound {
 			protocol.WriteNotFound(w)
+		} else if err == storage.ErrKeyInvalid {
+			protocol.WriteError(w, "BADREQ", "key contains invalid characters")
 		} else {
 			protocol.WriteError(w, "INTERNAL", err.Error())
 		}
@@ -126,6 +128,8 @@ func (s *Server) handleSet(cmd *protocol.Command, w io.Writer) {
 			protocol.WriteError(w, "TOOLARGE", "key too large")
 		case storage.ErrValueTooLarge:
 			protocol.WriteError(w, "TOOLARGE", "value too large")
+		case storage.ErrKeyInvalid:
+			protocol.WriteError(w, "BADREQ", "key contains invalid characters")
 		default:
 			protocol.WriteError(w, "INTERNAL", err.Error())
 		}
@@ -177,6 +181,8 @@ func (s *Server) handleExpire(cmd *protocol.Command, w io.Writer) {
 	if err != nil {
 		if err == storage.ErrKeyNotFound {
 			protocol.WriteNotFound(w)
+		} else if err == storage.ErrKeyInvalid {
+			protocol.WriteError(w, "BADREQ", "key contains invalid characters")
 		} else {
 			protocol.WriteError(w, "INTERNAL", err.Error())
 		}
@@ -221,6 +227,8 @@ func (s *Server) handleIncr(cmd *protocol.Command, w io.Writer, sign int64) {
 	if err != nil {
 		if err == storage.ErrNotInteger {
 			protocol.WriteError(w, "TYPE", "value is not an integer")
+		} else if err == storage.ErrKeyInvalid {
+			protocol.WriteError(w, "BADREQ", "key contains invalid characters")
 		} else {
 			protocol.WriteError(w, "INTERNAL", err.Error())
 		}
@@ -262,6 +270,9 @@ func (s *Server) handleMGet(cmd *protocol.Command, w io.Writer) {
 		if err != nil {
 			if err == storage.ErrKeyNotFound {
 				fmt.Fprintf(w, "NOT_FOUND %s\r\n", key)
+			} else if err == storage.ErrKeyInvalid {
+				protocol.WriteError(w, "BADREQ", "key contains invalid characters")
+				return
 			} else {
 				protocol.WriteError(w, "INTERNAL", err.Error())
 				return
@@ -311,6 +322,8 @@ func (s *Server) handleMSet(cmd *protocol.Command, w io.Writer) {
 		if err != nil {
 			if err == storage.ErrKeyTooLarge || err == storage.ErrValueTooLarge {
 				protocol.WriteError(w, "TOOLARGE", err.Error())
+			} else if err == storage.ErrKeyInvalid {
+				protocol.WriteError(w, "BADREQ", "key contains invalid characters")
 			} else {
 				protocol.WriteError(w, "INTERNAL", err.Error())
 			}

@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 )
 
 // SnapshotManager manages snapshot creation and cleanup

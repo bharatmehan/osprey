@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/alignecoderepos/osprey/internal/config"
-	"github.com/alignecoderepos/osprey/internal/server"
+	"github.com/bharatmehan/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/server"
 )
 
 func main() {

@@ -19,14 +19,14 @@ type Client struct {
 
 // Response represents a server response
 type Response struct {
-	Type    string
-	Value   []byte
-	Version uint64
+	Type     string
+	Value    []byte
+	Version  uint64
 	ExpiryMs int64
-	TTL     int64
-	Integer int64
-	Error   string
-	Success bool
+	TTL      int64
+	Integer  int64
+	Error    string
+	Success  bool
 }
 
 // New creates a new client connection
@@ -35,7 +35,7 @@ func New(address string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &Client{
 		conn:   conn,
 		reader: bufio.NewReader(conn),
@@ -53,16 +53,16 @@ func (c *Client) Ping() error {
 	if err := c.sendCommand("PING"); err != nil {
 		return err
 	}
-	
+
 	resp, err := c.readResponse()
 	if err != nil {
 		return err
 	}
-	
+
 	if resp.Type != "PONG" {
 		return fmt.Errorf("unexpected response: %s", resp.Type)
 	}
-	
+
 	return nil
 }
 
@@ -71,7 +71,7 @@ func (c *Client) Get(key string) (*Response, error) {
 	if err := c.sendCommand("GET", key); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -79,11 +79,11 @@ func (c *Client) Get(key string) (*Response, error) {
 func (c *Client) Set(key string, value []byte, options ...string) (*Response, error) {
 	args := []string{"SET", key, strconv.Itoa(len(value))}
 	args = append(args, options...)
-	
+
 	if err := c.sendCommandWithPayload(args, value); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -92,7 +92,7 @@ func (c *Client) Del(key string) (*Response, error) {
 	if err := c.sendCommand("DEL", key); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -101,7 +101,7 @@ func (c *Client) Exists(key string) (*Response, error) {
 	if err := c.sendCommand("EXISTS", key); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -110,7 +110,7 @@ func (c *Client) Expire(key string, ttlMs int64) (*Response, error) {
 	if err := c.sendCommand("EXPIRE", key, strconv.FormatInt(ttlMs, 10)); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -119,7 +119,7 @@ func (c *Client) TTL(key string) (*Response, error) {
 	if err := c.sendCommand("TTL", key); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -129,11 +129,11 @@ func (c *Client) Incr(key string, delta ...int64) (*Response, error) {
 	if len(delta) > 0 {
 		args = append(args, strconv.FormatInt(delta[0], 10))
 	}
-	
+
 	if err := c.sendCommand(args...); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
@@ -143,31 +143,31 @@ func (c *Client) Decr(key string, delta ...int64) (*Response, error) {
 	if len(delta) > 0 {
 		args = append(args, strconv.FormatInt(delta[0], 10))
 	}
-	
+
 	if err := c.sendCommand(args...); err != nil {
 		return nil, err
 	}
-	
+
 	return c.readResponse()
 }
 
 // MGet gets multiple keys
 func (c *Client) MGet(keys ...string) ([]*Response, error) {
 	args := append([]string{"MGET"}, keys...)
-	
+
 	if err := c.sendCommand(args...); err != nil {
 		return nil, err
 	}
-	
+
 	var responses []*Response
 	for range keys {
-		resp, err := c.readResponse()
+		resp, err := c.readMGetResponse()
 		if err != nil {
 			return nil, err
 		}
 		responses = append(responses, resp)
 	}
-	
+
 	return responses, nil
 }
 
@@ -176,28 +176,28 @@ func (c *Client) Stats() (map[string]string, error) {
 	if err := c.sendCommand("STATS"); err != nil {
 		return nil, err
 	}
-	
+
 	stats := make(map[string]string)
-	
+
 	for {
 		line, err := c.reader.ReadString('\n')
 		if err != nil {
 			return nil, err
 		}
-		
+
 		line = strings.TrimSuffix(line, "\n")
 		line = strings.TrimSuffix(line, "\r")
-		
+
 		if line == "END" {
 			break
 		}
-		
+
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) == 2 {
 			stats[parts[0]] = parts[1]
 		}
 	}
-	
+
 	return stats, nil
 }
 
@@ -218,17 +218,17 @@ func (c *Client) sendCommandWithPayload(args []string, payload []byte) error {
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = c.writer.Write(payload)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = c.writer.WriteString("\r\n")
 	if err != nil {
 		return err
 	}
-	
+
 	return c.writer.Flush()
 }
 
@@ -238,74 +238,74 @@ func (c *Client) readResponse() (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	line = strings.TrimSuffix(line, "\n")
 	line = strings.TrimSuffix(line, "\r")
-	
+
 	parts := strings.Fields(line)
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("empty response")
 	}
-	
+
 	resp := &Response{Type: parts[0]}
-	
+
 	switch parts[0] {
 	case "OK":
 		resp.Success = true
 		if len(parts) > 1 {
 			resp.Version, _ = strconv.ParseUint(parts[1], 10, 64)
 		}
-		
+
 	case "PONG":
 		resp.Success = true
-		
+
 	case "NOT_FOUND":
 		resp.Success = false
-		
+
 	case "VALUE":
 		if len(parts) < 4 {
 			return nil, fmt.Errorf("invalid VALUE response")
 		}
-		
+
 		length, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return nil, fmt.Errorf("invalid length in VALUE response")
 		}
-		
+
 		resp.Version, _ = strconv.ParseUint(parts[2], 10, 64)
 		resp.ExpiryMs, _ = strconv.ParseInt(parts[3], 10, 64)
-		
+
 		// Read the value
 		value := make([]byte, length)
 		_, err = io.ReadFull(c.reader, value)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Read trailing \r\n
 		c.reader.ReadString('\n')
-		
+
 		resp.Value = value
 		resp.Success = true
-		
+
 	case "DELETED":
 		if len(parts) > 1 {
 			deleted, _ := strconv.Atoi(parts[1])
 			resp.Success = deleted == 1
 		}
-		
+
 	case "EXISTS":
 		if len(parts) > 1 {
 			exists, _ := strconv.Atoi(parts[1])
 			resp.Success = exists == 1
 		}
-		
+
 	case "ERR":
 		resp.Success = false
 		if len(parts) > 1 {
 			resp.Error = strings.Join(parts[1:], " ")
 		}
-		
+
 	default:
 		// Try to parse as integer (for INCR/DECR/TTL)
 		if val, err := strconv.ParseInt(parts[0], 10, 64); err == nil {
@@ -317,6 +317,68 @@ func (c *Client) readResponse() (*Response, error) {
 			resp.Success = false
 		}
 	}
-	
+
+	return resp, nil
+}
+
+// readMGetResponse reads and parses an MGET response (with key in VALUE line)
+func (c *Client) readMGetResponse() (*Response, error) {
+	line, err := c.reader.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	line = strings.TrimSuffix(line, "\n")
+	line = strings.TrimSuffix(line, "\r")
+
+	parts := strings.Fields(line)
+	if len(parts) == 0 {
+		return nil, fmt.Errorf("empty response")
+	}
+
+	resp := &Response{Type: parts[0]}
+
+	switch parts[0] {
+	case "NOT_FOUND":
+		resp.Success = false
+
+	case "VALUE":
+		if len(parts) < 5 {
+			return nil, fmt.Errorf("invalid VALUE response")
+		}
+
+		// MGET VALUE format: VALUE <key> <length> <version> <expiry>
+		length, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return nil, fmt.Errorf("invalid length in VALUE response")
+		}
+
+		resp.Version, _ = strconv.ParseUint(parts[3], 10, 64)
+		resp.ExpiryMs, _ = strconv.ParseInt(parts[4], 10, 64)
+
+		// Read the value
+		value := make([]byte, length)
+		_, err = io.ReadFull(c.reader, value)
+		if err != nil {
+			return nil, err
+		}
+
+		// Read trailing \r\n
+		c.reader.ReadString('\n')
+
+		resp.Value = value
+		resp.Success = true
+
+	case "ERR":
+		resp.Success = false
+		if len(parts) > 1 {
+			resp.Error = strings.Join(parts[1:], " ")
+		}
+
+	default:
+		resp.Error = "unknown response type"
+		resp.Success = false
+	}
+
 	return resp, nil
 }

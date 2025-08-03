@@ -15,7 +15,7 @@ import (
 const (
 	WALMagic   = 0x4F535057 // 'OSPW'
 	WALVersion = 1
-	
+
 	// Record types
 	RecordTypeSET    = 0
 	RecordTypeDEL    = 1
@@ -30,26 +30,26 @@ var (
 
 // WALRecord represents a single WAL record
 type WALRecord struct {
-	Type      uint8
-	Key       string
-	Value     []byte
-	ExpiryMs  int64
-	Version   uint64
+	Type     uint8
+	Key      string
+	Value    []byte
+	ExpiryMs int64
+	Version  uint64
 }
 
 // WAL represents the write-ahead log
 type WAL struct {
-	mu         sync.Mutex
-	file       *os.File
-	path       string
-	size       int64
-	maxSize    int64
-	
+	mu      sync.Mutex
+	file    *os.File
+	path    string
+	size    int64
+	maxSize int64
+
 	// Sync policy
 	syncPolicy string
 	lastSync   time.Time
 	syncBytes  int64
-	
+
 	// Buffering
 	buffer     []byte
 	bufferSize int64
@@ -59,18 +59,18 @@ type WAL struct {
 func NewWAL(dir string, index int, maxSize int64, syncPolicy string) (*WAL, error) {
 	filename := fmt.Sprintf("wal-%08d.oswal", index)
 	path := filepath.Join(dir, filename)
-	
+
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	stat, err := file.Stat()
 	if err != nil {
 		file.Close()
 		return nil, err
 	}
-	
+
 	return &WAL{
 		file:       file,
 		path:       path,
@@ -86,80 +86,80 @@ func NewWAL(dir string, index int, maxSize int64, syncPolicy string) (*WAL, erro
 func (w *WAL) Append(record *WALRecord) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	// Serialize record
 	data, err := w.serializeRecord(record)
 	if err != nil {
 		return err
 	}
-	
+
 	// Write to file
 	n, err := w.file.Write(data)
 	if err != nil {
 		return err
 	}
-	
+
 	w.size += int64(n)
 	w.syncBytes += int64(n)
-	
+
 	// Handle sync policy
 	if err := w.maybeSync(); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
 // serializeRecord serializes a WAL record
 func (w *WAL) serializeRecord(record *WALRecord) ([]byte, error) {
 	keyBytes := []byte(record.Key)
-	
+
 	// Calculate total size
 	totalSize := 4 + 2 + 1 + 4 + 4 + 8 + 8 + len(keyBytes) + len(record.Value) + 4
 	buf := make([]byte, totalSize)
-	
+
 	offset := 0
-	
+
 	// Magic
 	binary.LittleEndian.PutUint32(buf[offset:], WALMagic)
 	offset += 4
-	
+
 	// Version
 	binary.LittleEndian.PutUint16(buf[offset:], WALVersion)
 	offset += 2
-	
+
 	// Record type
 	buf[offset] = record.Type
 	offset += 1
-	
+
 	// Key length
 	binary.LittleEndian.PutUint32(buf[offset:], uint32(len(keyBytes)))
 	offset += 4
-	
+
 	// Value length
 	binary.LittleEndian.PutUint32(buf[offset:], uint32(len(record.Value)))
 	offset += 4
-	
+
 	// Expiry
 	binary.LittleEndian.PutUint64(buf[offset:], uint64(record.ExpiryMs))
 	offset += 8
-	
+
 	// Version
 	binary.LittleEndian.PutUint64(buf[offset:], record.Version)
 	offset += 8
-	
+
 	// Key
 	copy(buf[offset:], keyBytes)
 	offset += len(keyBytes)
-	
+
 	// Value
 	copy(buf[offset:], record.Value)
 	offset += len(record.Value)
-	
+
 	// CRC32C (Castagnoli)
 	crc := crc32.Checksum(buf[6:offset], crc32.MakeTable(crc32.Castagnoli))
 	binary.LittleEndian.PutUint32(buf[offset:], crc)
-	
+
 	return buf, nil
 }
 
@@ -168,7 +168,7 @@ func (w *WAL) maybeSync() error {
 	switch w.syncPolicy {
 	case "always":
 		return w.file.Sync()
-		
+
 	case "batch":
 		// Sync if enough time has passed or enough bytes written
 		if time.Since(w.lastSync) > 100*time.Millisecond || w.syncBytes > 1024*1024 {
@@ -177,11 +177,11 @@ func (w *WAL) maybeSync() error {
 			w.syncBytes = 0
 			return err
 		}
-		
+
 	case "os":
 		// Let OS handle it
 	}
-	
+
 	return nil
 }
 
@@ -201,11 +201,11 @@ func (w *WAL) IsFull() bool {
 func (w *WAL) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	if w.syncPolicy != "os" {
 		w.file.Sync()
 	}
-	
+
 	return w.file.Close()
 }
 
@@ -226,7 +226,7 @@ func OpenWALReader(path string) (*WALReader, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var reader io.Reader = file
 	return &WALReader{
 		file:   file,
@@ -237,75 +237,86 @@ func OpenWALReader(path string) (*WALReader, error) {
 // ReadRecord reads the next record from the WAL
 func (r *WALReader) ReadRecord() (*WALRecord, error) {
 	reader := *r.reader
-	
-	// Read header
-	header := make([]byte, 7) // magic(4) + version(2) + type(1)
-	if _, err := io.ReadFull(reader, header); err != nil {
+
+	// Read magic first
+	magicBytes := make([]byte, 4)
+	if _, err := io.ReadFull(reader, magicBytes); err != nil {
 		if err == io.EOF {
 			return nil, io.EOF
 		}
 		return nil, err
 	}
-	
+
 	// Check magic
-	magic := binary.LittleEndian.Uint32(header[0:4])
+	magic := binary.LittleEndian.Uint32(magicBytes)
 	if magic != WALMagic {
 		return nil, ErrInvalidMagic
 	}
-	
+
+	// Read rest of header
+	restHeader := make([]byte, 3) // version(2) + type(1)
+	if _, err := io.ReadFull(reader, restHeader); err != nil {
+		return nil, err
+	}
+
 	// Check version
-	version := binary.LittleEndian.Uint16(header[4:6])
+	version := binary.LittleEndian.Uint16(restHeader[0:2])
 	if version != WALVersion {
 		return nil, ErrInvalidVersion
 	}
-	
-	recordType := header[6]
-	
+
+	recordType := restHeader[2]
+
 	// Read lengths
 	lengths := make([]byte, 8) // key_len(4) + val_len(4)
 	if _, err := io.ReadFull(reader, lengths); err != nil {
 		return nil, err
 	}
-	
+
 	keyLen := binary.LittleEndian.Uint32(lengths[0:4])
 	valLen := binary.LittleEndian.Uint32(lengths[4:8])
-	
+
 	// Read metadata
 	metadata := make([]byte, 16) // expiry(8) + version(8)
 	if _, err := io.ReadFull(reader, metadata); err != nil {
 		return nil, err
 	}
-	
+
 	expiryMs := int64(binary.LittleEndian.Uint64(metadata[0:8]))
 	recordVersion := binary.LittleEndian.Uint64(metadata[8:16])
-	
+
 	// Read key
 	key := make([]byte, keyLen)
 	if _, err := io.ReadFull(reader, key); err != nil {
 		return nil, err
 	}
-	
+
 	// Read value
-	value := make([]byte, valLen)
+	var value []byte
 	if valLen > 0 {
+		value = make([]byte, valLen)
 		if _, err := io.ReadFull(reader, value); err != nil {
 			return nil, err
 		}
+	} else if recordType == RecordTypeSET {
+		// For SET records, distinguish between nil and empty slice
+		value = []byte{}
 	}
-	
+	// For DEL/EXPIRE records, leave value as nil
+
 	// Read CRC
 	crcBytes := make([]byte, 4)
 	if _, err := io.ReadFull(reader, crcBytes); err != nil {
 		return nil, err
 	}
-	
+
 	expectedCRC := binary.LittleEndian.Uint32(crcBytes)
-	
+
 	// Verify CRC
 	dataLen := 1 + 4 + 4 + 8 + 8 + len(key) + len(value)
 	data := make([]byte, dataLen)
 	offset := 0
-	
+
 	data[offset] = recordType
 	offset += 1
 	binary.LittleEndian.PutUint32(data[offset:], keyLen)
@@ -319,12 +330,12 @@ func (r *WALReader) ReadRecord() (*WALRecord, error) {
 	copy(data[offset:], key)
 	offset += len(key)
 	copy(data[offset:], value)
-	
+
 	actualCRC := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
 	if actualCRC != expectedCRC {
 		return nil, ErrCorruptedRecord
 	}
-	
+
 	return &WALRecord{
 		Type:     recordType,
 		Key:      string(key),

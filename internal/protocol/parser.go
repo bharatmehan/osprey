@@ -41,26 +41,26 @@ func (p *Parser) ParseCommand() (*Command, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Trim \r\n
 	line = strings.TrimSuffix(line, "\n")
 	line = strings.TrimSuffix(line, "\r")
-	
+
 	if line == "" {
 		return nil, ErrInvalidCommand
 	}
-	
+
 	// Split into parts
 	parts := strings.Fields(line)
 	if len(parts) == 0 {
 		return nil, ErrInvalidCommand
 	}
-	
+
 	cmd := &Command{
 		Name: strings.ToUpper(parts[0]),
 		Args: parts[1:],
 	}
-	
+
 	// Check if command requires payload
 	if cmd.requiresPayload() {
 		payload, err := p.readPayload(cmd)
@@ -69,7 +69,7 @@ func (p *Parser) ParseCommand() (*Command, error) {
 		}
 		cmd.Payload = payload
 	}
-	
+
 	return cmd, nil
 }
 
@@ -102,31 +102,31 @@ func (p *Parser) readSinglePayload(cmd *Command) ([]byte, error) {
 	if len(cmd.Args) < 2 {
 		return nil, ErrInvalidArgs
 	}
-	
+
 	// Parse length from args[1]
 	length, err := strconv.Atoi(cmd.Args[1])
 	if err != nil || length < 0 {
 		return nil, ErrInvalidArgs
 	}
-	
+
 	// Read the payload
 	payload := make([]byte, length)
 	_, err = io.ReadFull(p.reader, payload)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Read the trailing \r\n
 	crlf := make([]byte, 2)
 	_, err = io.ReadFull(p.reader, crlf)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if crlf[0] != '\r' || crlf[1] != '\n' {
 		return nil, ErrInvalidPayload
 	}
-	
+
 	return payload, nil
 }
 
@@ -134,14 +134,14 @@ func (p *Parser) readSinglePayload(cmd *Command) ([]byte, error) {
 func (p *Parser) readMultiPayload(cmd *Command) ([]byte, error) {
 	// MSET format: MSET k1 len1 k2 len2 ...
 	// Followed by concatenated payloads
-	
+
 	if len(cmd.Args)%2 != 0 {
 		return nil, ErrInvalidArgs
 	}
-	
+
 	totalLength := 0
 	lengths := []int{}
-	
+
 	// Parse all lengths
 	for i := 1; i < len(cmd.Args); i += 2 {
 		length, err := strconv.Atoi(cmd.Args[i])
@@ -151,25 +151,25 @@ func (p *Parser) readMultiPayload(cmd *Command) ([]byte, error) {
 		lengths = append(lengths, length)
 		totalLength += length
 	}
-	
+
 	// Read all payloads at once
 	payload := make([]byte, totalLength)
 	_, err := io.ReadFull(p.reader, payload)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Read the trailing \r\n
 	crlf := make([]byte, 2)
 	_, err = io.ReadFull(p.reader, crlf)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if crlf[0] != '\r' || crlf[1] != '\n' {
 		return nil, ErrInvalidPayload
 	}
-	
+
 	return payload, nil
 }
 
@@ -211,12 +211,12 @@ func WriteValue(w io.Writer, length int, version uint64, expiryMs int64, value [
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = w.Write(value)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = w.Write([]byte("\r\n"))
 	return err
 }

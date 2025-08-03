@@ -1,4 +1,4 @@
-module github.com/alignecoderepos/osprey
+module github.com/bharatmehan/osprey
 
 go 1.21
 

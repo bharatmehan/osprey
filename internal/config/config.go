@@ -17,16 +17,16 @@ type Config struct {
 	MaxValueBytes int `toml:"max_value_bytes"`
 
 	// Persistence
-	DataDir          string `toml:"data_dir"`
-	WALMaxBytes      int64  `toml:"wal_max_bytes"`
-	SyncPolicy       string `toml:"sync_policy"`
-	BatchFsyncMs     int    `toml:"batch_fsync_ms"`
-	BatchFsyncBytes  int64  `toml:"batch_fsync_bytes"`
+	DataDir         string `toml:"data_dir"`
+	WALMaxBytes     int64  `toml:"wal_max_bytes"`
+	SyncPolicy      string `toml:"sync_policy"`
+	BatchFsyncMs    int    `toml:"batch_fsync_ms"`
+	BatchFsyncBytes int64  `toml:"batch_fsync_bytes"`
 
 	// Snapshot
-	EnableSnapshot       bool  `toml:"enable_snapshot"`
-	SnapshotPauseMaxMs   int   `toml:"snapshot_pause_max_ms"`
-	BusyWarnMs           int   `toml:"busy_warn_ms"`
+	EnableSnapshot     bool `toml:"enable_snapshot"`
+	SnapshotPauseMaxMs int  `toml:"snapshot_pause_max_ms"`
+	BusyWarnMs         int  `toml:"busy_warn_ms"`
 
 	// Expiry
 	SweepIntervalMs int `toml:"sweep_interval_ms"`
@@ -36,29 +36,29 @@ type Config struct {
 	MetricsEnable bool `toml:"metrics_enable"`
 
 	// Logging
-	LogLevel            string `toml:"log_level"`
-	SlowlogThresholdMs  int    `toml:"slowlog_threshold_ms"`
+	LogLevel           string `toml:"log_level"`
+	SlowlogThresholdMs int    `toml:"slowlog_threshold_ms"`
 }
 
 func DefaultConfig() *Config {
 	return &Config{
-		ListenAddr:          "0.0.0.0:7070",
-		MaxClients:          10000,
-		MaxKeyBytes:         256,
-		MaxValueBytes:       16 * 1024 * 1024, // 16 MiB
-		DataDir:             "./data",
-		WALMaxBytes:         256 * 1024 * 1024, // 256 MiB
-		SyncPolicy:          "batch",
-		BatchFsyncMs:        100,
-		BatchFsyncBytes:     1024 * 1024, // 1 MiB
-		EnableSnapshot:      true,
-		SnapshotPauseMaxMs:  500,
-		BusyWarnMs:          50,
-		SweepIntervalMs:     200,
-		SweepBatch:          1000,
-		MetricsEnable:       true,
-		LogLevel:            "INFO",
-		SlowlogThresholdMs:  50,
+		ListenAddr:         "0.0.0.0:7070",
+		MaxClients:         10000,
+		MaxKeyBytes:        256,
+		MaxValueBytes:      16 * 1024 * 1024, // 16 MiB
+		DataDir:            "./data",
+		WALMaxBytes:        256 * 1024 * 1024, // 256 MiB
+		SyncPolicy:         "batch",
+		BatchFsyncMs:       100,
+		BatchFsyncBytes:    1024 * 1024, // 1 MiB
+		EnableSnapshot:     true,
+		SnapshotPauseMaxMs: 500,
+		BusyWarnMs:         50,
+		SweepIntervalMs:    200,
+		SweepBatch:         1000,
+		MetricsEnable:      true,
+		LogLevel:           "INFO",
+		SlowlogThresholdMs: 50,
 	}
 }
 

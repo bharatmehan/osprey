@@ -1,6 +1,6 @@
 # Osprey - Key-Value Store
 
-Osprey is a single-process, single-node key-value store that serves requests over a simple text protocol on TCP. It provides durability through write-ahead logging and supports TTL-based expiration.
+Osprey is a single process, single node key-value store that serves requests over a simple text protocol on TCP. It provides durability through write-ahead logging and supports TTL-based expiration.
 
 ## Quick Start
 
@@ -79,10 +79,6 @@ See `osprey.toml` for all configuration options:
 - **In-memory hash map** for fast access
 - **Lazy expiration** with optional background sweeper
 - **CRC32 checksums** for data integrity
-
-## Current Status
-
-See [PROGRESS_STATUS.md](PROGRESS_STATUS.md) for detailed implementation status.
 
 ## Development
 

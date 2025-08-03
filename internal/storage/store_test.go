@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alignecoderepos/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -247,7 +247,7 @@ func TestStore_Stats(t *testing.T) {
 	stats = store.GetStats()
 	assert.Equal(t, "3", stats["keys"]) // key1, key2, counter
 	assert.Equal(t, "1", stats["cmd_get"])
-	assert.Equal(t, "3", stats["cmd_set"]) // 2 sets + 1 incr
+	assert.Equal(t, "2", stats["cmd_set"]) // 2 sets only
 	assert.Equal(t, "1", stats["cmd_del"])
 	assert.Equal(t, "1", stats["cmd_incr"])
 }
