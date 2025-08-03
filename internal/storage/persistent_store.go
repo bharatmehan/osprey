@@ -299,9 +299,41 @@ func (ps *PersistentStore) Close() error {
 	// Stop background tasks
 	close(ps.sweeperStop)
 	close(ps.snapshotStop)
-	<-ps.sweeperDone
-	<-ps.snapshotDone
+	
+	// Wait for background tasks to finish with timeout
+	timeout := time.NewTimer(5 * time.Second)
+	defer timeout.Stop()
+	
+	sweeperDone := make(chan struct{})
+	snapshotDone := make(chan struct{})
+	
+	go func() {
+		<-ps.sweeperDone
+		close(sweeperDone)
+	}()
+	
+	go func() {
+		<-ps.snapshotDone
+		close(snapshotDone)
+	}()
+	
+	// Wait for both or timeout
+	sweeperFinished := false
+	snapshotFinished := false
+	
+	for !sweeperFinished || !snapshotFinished {
+		select {
+		case <-sweeperDone:
+			sweeperFinished = true
+		case <-snapshotDone:
+			snapshotFinished = true
+		case <-timeout.C:
+			log.Printf("Warning: Background tasks did not finish within timeout during shutdown")
+			goto cleanup
+		}
+	}
 
+cleanup:
 	return ps.walManager.Close()
 }
 

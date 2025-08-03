@@ -59,15 +59,28 @@ func (s *Server) Start() error {
 
 	// Accept connections
 	for {
+		select {
+		case <-s.shutdown:
+			return nil
+		default:
+		}
+
 		conn, err := listener.Accept()
 		if err != nil {
+			// Check if we're shutting down
 			select {
 			case <-s.shutdown:
 				return nil
 			default:
-				log.Printf("Accept error: %v", err)
-				continue
 			}
+			
+			// Check for closed listener error
+			if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
+				return nil
+			}
+			
+			log.Printf("Accept error: %v", err)
+			continue
 		}
 
 		// Check client limit
@@ -143,8 +156,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 		default:
 		}
 
-		// Set read deadline
-		conn.SetReadDeadline(time.Now().Add(time.Minute))
+		// Set read deadline to make shutdown more responsive
+		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 		cmd, err := parser.ParseCommand()
 		if err != nil {
