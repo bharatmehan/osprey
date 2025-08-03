@@ -247,24 +247,6 @@ go test ./internal/integration
 go test -bench=. ./internal/benchmark
 ```
 
-### Project Structure
-
-```
-├── cmd/
-│   ├── osprey/          # Server main
-│   └── osprey-cli/      # CLI client main
-├── internal/
-│   ├── config/          # Configuration management
-│   ├── protocol/        # Protocol parsing and responses
-│   ├── server/          # TCP server and request handlers
-│   ├── storage/         # Storage engine (WAL, snapshots, etc.)
-│   └── integration/     # Integration tests
-├── pkg/
-│   └── client/          # Go client library
-└── tools/
-    └── benchmark/       # Performance testing tools
-```
-
 ### Testing
 
 ```bash
@@ -305,5 +287,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by Redis architecture and protocol design
 - Uses CRC32C checksums for data integrity
 - Built with Go's excellent networking and concurrency primitives
-
----
