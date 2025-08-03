@@ -1,0 +1,32 @@
+# Osprey Configuration
+
+# Network
+listen_addr = "0.0.0.0:7070"
+max_clients = 10000
+
+# Limits
+max_key_bytes = 256
+max_value_bytes = 16777216  # 16 MiB
+
+# Persistence
+data_dir = "./data"
+wal_max_bytes = 268435456    # 256 MiB
+sync_policy = "batch"        # one of: os | batch | always
+batch_fsync_ms = 100
+batch_fsync_bytes = 1048576
+
+# Snapshot
+enable_snapshot = true
+snapshot_pause_max_ms = 500
+busy_warn_ms = 50
+
+# Expiry
+sweep_interval_ms = 200
+sweep_batch = 1000
+
+# Metrics
+metrics_enable = true
+
+# Logging
+log_level = "INFO"
+slowlog_threshold_ms = 50
