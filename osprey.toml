@@ -29,4 +29,5 @@ metrics_enable = true
 
 # Logging
 log_level = "INFO"
+log_file = ""  # Empty means use default: data/logs/osprey.log
 slowlog_threshold_ms = 50

@@ -164,6 +164,11 @@ sweep_batch = 1000
 
 # Observability
 metrics_enable = true
+
+# Logging
+log_level = "INFO"
+log_file = ""  # Empty means default: data/logs/osprey.log
+slowlog_threshold_ms = 50
 ```
 
 ### Sync Policies
@@ -250,14 +255,20 @@ go test -bench=. ./internal/benchmark
 ### Testing
 
 ```bash
-# Unit tests
-go test ./internal/...
+# Unit tests only
+make test
 
-# Integration tests with real server
-go test ./internal/integration
+# Integration tests only
+make test-integration
+
+# All tests (unit + integration)
+make test-all
+
+# Tests with coverage report
+make test-coverage
 
 # Performance benchmarks
-cd tools/benchmark && go run .
+cd cmd/bench && go run .
 ```
 
 ## Contributing

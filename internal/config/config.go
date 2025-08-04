@@ -37,6 +37,7 @@ type Config struct {
 
 	// Logging
 	LogLevel           string `toml:"log_level"`
+	LogFile            string `toml:"log_file"`
 	SlowlogThresholdMs int    `toml:"slowlog_threshold_ms"`
 }
 
@@ -58,6 +59,7 @@ func DefaultConfig() *Config {
 		SweepBatch:         1000,
 		MetricsEnable:      true,
 		LogLevel:           "INFO",
+		LogFile:            "",
 		SlowlogThresholdMs: 50,
 	}
 }

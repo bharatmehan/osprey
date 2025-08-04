@@ -1,6 +1,7 @@
 .PHONY: all build clean test run
 
 # Build variables
+BIN_DIR=bin
 BINARY_NAME=osprey
 CLI_NAME=osprey-cli
 TEST_CLIENT=test-client
@@ -13,32 +14,39 @@ all: build
 build: build-server build-cli build-test-client build-bench
 
 build-server:
-	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) cmd/osprey/main.go
+	@mkdir -p $(BIN_DIR)
+	$(GO) build $(GOFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) cmd/osprey/main.go
 
 build-cli:
-	$(GO) build $(GOFLAGS) -o $(CLI_NAME) cmd/osprey-cli/main.go
+	@mkdir -p $(BIN_DIR)
+	$(GO) build $(GOFLAGS) -o $(BIN_DIR)/$(CLI_NAME) cmd/osprey-cli/main.go
 
 build-test-client:
-	$(GO) build $(GOFLAGS) -o $(TEST_CLIENT) cmd/test-client/main.go
+	@mkdir -p $(BIN_DIR)
+	$(GO) build $(GOFLAGS) -o $(BIN_DIR)/$(TEST_CLIENT) cmd/test-client/main.go
 
 build-bench:
-	$(GO) build $(GOFLAGS) -o $(BENCH_NAME) cmd/bench/main.go
+	@mkdir -p $(BIN_DIR)
+	$(GO) build $(GOFLAGS) -o $(BIN_DIR)/$(BENCH_NAME) cmd/bench/main.go
 
 run: build-server
-	./$(BINARY_NAME)
+	./$(BIN_DIR)/$(BINARY_NAME)
 
 test:
-	$(GO) test $(GOFLAGS) ./...
+	$(GO) test $(GOFLAGS) ./internal/... ./pkg/...
 
 test-integration:
-	$(GO) test $(GOFLAGS) -v .
+	$(GO) test $(GOFLAGS) -v ./tests/integration/...
+
+test-all:
+	$(GO) test $(GOFLAGS) ./...
 
 test-coverage:
 	$(GO) test $(GOFLAGS) -coverprofile=coverage.out ./...
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
 clean:
-	rm -f $(BINARY_NAME) $(CLI_NAME) $(TEST_CLIENT) $(BENCH_NAME)
+	rm -rf $(BIN_DIR)
 	rm -rf data/
 
 fmt:

@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/bharatmehan/osprey/internal/config"
+	"github.com/bharatmehan/osprey/internal/logging"
 	"github.com/bharatmehan/osprey/internal/server"
 )
 
@@ -21,6 +23,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	// Initialize logging
+	logPath := cfg.LogFile
+	if logPath == "" {
+		// Default to data/logs/osprey.log if not specified
+		logPath = filepath.Join(cfg.DataDir, "logs", "osprey.log")
+	}
+	
+	if err := logging.InitLogger(logPath, cfg.LogLevel); err != nil {
+		log.Fatalf("Failed to initialize logging: %v", err)
+	}
+	defer logging.CloseLogger()
+
+	log.Printf("Starting Osprey server with config: %s", configPath)
+	log.Printf("Log file: %s", logPath)
 
 	srv, err := server.New(cfg)
 	if err != nil {

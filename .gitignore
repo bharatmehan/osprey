@@ -38,7 +38,9 @@ Thumbs.db
 /osprey-cli
 /test-client
 /bench
+/bin/
 /data/
+/logs/
 *.log
 
 # Temporary files
@@ -53,6 +55,4 @@ coverage.html
 *.bench
 
 #Docs
-REQUIREMENTS.md
-PROGRESS_STATUS.md
-CHANGELOG.md
+project/
